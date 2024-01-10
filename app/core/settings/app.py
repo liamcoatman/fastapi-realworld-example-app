@@ -1,9 +1,11 @@
 import logging
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any
+from pydantic_settings import SettingsConfigDict
+
+import sentry_sdk
 
 from loguru import logger
-from pydantic import PostgresDsn, SecretStr
 
 from app.core.logging import InterceptHandler
 from app.core.settings.base import BaseAppSettings
@@ -15,29 +17,29 @@ class AppSettings(BaseAppSettings):
     openapi_prefix: str = ""
     openapi_url: str = "/openapi.json"
     redoc_url: str = "/redoc"
-    title: str = "FastAPI example application"
+    title: str = "ML model serving example application"
     version: str = "0.0.0"
-
-    database_url: PostgresDsn
-    max_connection_count: int = 10
-    min_connection_count: int = 10
-
-    secret_key: SecretStr
 
     api_prefix: str = "/api"
 
-    jwt_token_prefix: str = "Token"
-
-    allowed_hosts: List[str] = ["*"]
-
     logging_level: int = logging.INFO
-    loggers: Tuple[str, str] = ("uvicorn.asgi", "uvicorn.access")
+    loggers: tuple[str, str] = ("uvicorn.asgi", "uvicorn.access")
 
-    class Config:
-        validate_assignment = True
+    model_name: str
+    model_path: str
+    # route, schema?
+
+    # sentry_dsn: str
+    # sentry_environment: str
+    # sentry_tags_cluster: str
+    # sentry_tags_tenant: str
+
+    # build_number: str
+
+    model_config = SettingsConfigDict(protected_namespaces=("settings_",))
 
     @property
-    def fastapi_kwargs(self) -> Dict[str, Any]:
+    def fastapi_kwargs(self) -> dict[str, Any]:
         return {
             "debug": self.debug,
             "docs_url": self.docs_url,
@@ -55,3 +57,15 @@ class AppSettings(BaseAppSettings):
             logging_logger.handlers = [InterceptHandler(level=self.logging_level)]
 
         logger.configure(handlers=[{"sink": sys.stderr, "level": self.logging_level}])
+
+    # def configure_sentry(self) -> None:
+    #     # TODO: Filter out suppressed exceptions
+    #     sentry_sdk.init(
+    #         dsn=self.sentry_dsn,
+    #         environment=self.sentry_environment,
+    #         release=self.build_number,
+    #     )
+
+    #     sentry_sdk.set_tag("application", self.title)
+    #     sentry_sdk.set_tag("cluster", self.sentry_tags_cluster)
+    #     sentry_sdk.set_tag("tenant", self.sentry_tags_tenant)

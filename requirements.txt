@@ -1,0 +1,8 @@
+fastapi
+fsspec[s3]
+loguru
+numpy
+pydantic
+pydantic-settings
+sentry-sdk[fastapi]
+uvicorn
